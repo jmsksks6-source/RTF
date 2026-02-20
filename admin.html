@@ -1,0 +1,15 @@
+<button onclick="fetch('/start_timer')">ابدأ العداد ⏱️</button>
+<hr>
+{% for ans in data.answers %}
+    <div style="margin: 10px;">
+        <span>{{ ans.text }} ({{ ans.points }} نقطة)</span>
+        <button onclick="reveal({{ loop.index0 }}, 'team1')">لفريق A</button>
+        <button onclick="reveal({{ loop.index0 }}, 'team2')">لفريق B</button>
+    </div>
+{% endfor %}
+
+<script>
+function reveal(idx, team) {
+    fetch(`/reveal/${idx}/${team}`);
+}
+</script>
