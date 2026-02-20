@@ -2,107 +2,128 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>The Architect - Ultra Game Master</title>
+    <title>The Architect - Global Top 10</title>
     <style>
-        :root { --gold: #d4af37; --dark: #0a0b10; --card: #161b22; --accent: #3498db; }
-        body { background-color: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        :root { --gold: #d4af37; --dark: #0a0b10; --card: #161b22; }
+        body { background-color: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; height: 100vh; }
         
-        /* الهيدر والتحكم بالأسئلة */
-        .header { background: var(--card); padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--gold); }
-        .nav-btn { background: var(--gold); border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        /* واجهة إدخال الأسماء */
+        #setup-layer { position: fixed; inset: 0; background: var(--dark); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; border: 5px solid var(--gold); }
+        .setup-input { padding: 15px; font-size: 22px; border-radius: 10px; border: 2px solid var(--gold); background: #000; color: white; text-align: center; width: 300px; }
+        .start-cmd { padding: 15px 50px; font-size: 24px; background: var(--gold); color: black; border: none; cursor: pointer; font-weight: bold; border-radius: 10px; transition: 0.3s; }
 
-        .game-layout { display: grid; grid-template-columns: 250px 1fr 250px; flex: 1; padding: 20px; gap: 30px; }
-        .side-panel { background: var(--card); border: 2px solid var(--gold); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .score { font-size: 80px; font-weight: 900; text-shadow: 0 0 15px var(--gold); }
+        /* الشاشة الرئيسية */
+        .layout { display: grid; grid-template-columns: 280px 1fr 280px; height: 100vh; padding: 20px; gap: 30px; box-sizing: border-box; }
+        .panel { background: var(--card); border: 2px solid var(--gold); border-radius: 25px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .team-title { font-size: 30px; color: var(--gold); position: absolute; top: 20px; }
+        .score-num { font-size: 100px; font-weight: 900; text-shadow: 0 0 20px var(--gold); }
 
-        .q-display { background: var(--card); padding: 20px; border-radius: 15px; text-align: center; font-size: 28px; margin-bottom: 20px; border: 1px solid #333; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .card { background: var(--card); height: 70px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 22px; cursor: pointer; border: 1px solid #444; transition: 0.3s; }
-        .card.revealed { background: var(--gold); color: black; font-weight: bold; }
+        .main-zone { display: flex; flex-direction: column; gap: 20px; }
+        .nav-bar { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 10px 20px; border-radius: 15px; border: 1px solid #333; }
+        .q-box { background: var(--card); padding: 25px; border-radius: 20px; text-align: center; font-size: 30px; border-bottom: 4px solid var(--gold); min-height: 80px; display: flex; align-items: center; justify-content: center; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; flex: 1; }
+        .ans-card { background: var(--card); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; border: 1px solid #444; transition: 0.2s; position: relative; }
+        .ans-card.revealed { background: var(--gold); color: black; font-weight: bold; border-color: #fff; }
 
-        /* النافذة المنبثقة (Modal) */
-        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
-        .modal-content { background: var(--card); padding: 40px; border-radius: 20px; border: 2px solid var(--gold); width: 400px; text-align: center; }
-        .modal-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: none; border-radius: 10px; font-size: 18px; cursor: pointer; color: white; }
+        /* النافذة المنبثقة */
+        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; align-items: center; justify-content: center; }
+        .modal-box { background: var(--card); padding: 40px; border-radius: 30px; border: 3px solid var(--gold); width: 450px; text-align: center; }
+        .modal-btn { width: 100%; padding: 18px; margin: 10px 0; border: none; border-radius: 15px; font-size: 20px; cursor: pointer; color: white; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <button class="nav-btn" onclick="prevQ()">السؤال السابق</button>
-    <div id="q-count">سؤال 1 من 5</div>
-    <button class="nav-btn" onclick="nextQ()">السؤال التالي</button>
+<div id="setup-layer">
+    <h1 style="color:var(--gold); font-size: 40px;">تعريف الفرق سيدي</h1>
+    <input type="text" id="t1-input" class="setup-input" placeholder="اسم الفريق الأول">
+    <input type="text" id="t2-input" class="setup-input" placeholder="اسم الفريق الثاني">
+    <button class="start-cmd" onclick="initGame()">تفعيل المحاكاة 🔥</button>
 </div>
 
-<div class="game-layout">
-    <div class="side-panel"><h2 id="n1">فريق أ</h2><div class="score" id="s1">0</div></div>
-    
-    <div class="center">
-        <div class="q-display" id="q-text">جاري التحميل...</div>
-        <div class="grid" id="grid"></div>
+<div class="layout">
+    <div class="panel"><div class="team-title" id="t1-name">الفريق الأول</div><div class="score-num" id="s1-val">0</div></div>
+    <div class="main-zone">
+        <div class="nav-bar">
+            <button onclick="changeQ(-1)" style="background:#444; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">السابق</button>
+            <div id="q-progress">سؤال 1 من 10</div>
+            <button onclick="changeQ(1)" style="background:#444; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">التالي</button>
+        </div>
+        <div class="q-box" id="q-text">جاري التحميل...</div>
+        <div class="grid" id="game-grid"></div>
     </div>
-
-    <div class="side-panel"><h2 id="n2">فريق ب</h2><div class="score" id="s2">0</div></div>
+    <div class="panel"><div class="team-title" id="t2-name">الفريق الثاني</div><div class="score-num" id="s2-val">0</div></div>
 </div>
 
 <div id="modal">
-    <div class="modal-content">
-        <h3 id="modal-q-title" style="color:var(--gold)">من صاحب الإجابة؟</h3>
-        <p id="target-ans" style="font-size: 20px;"></p>
-        <button class="modal-btn" style="background:#2ecc71" onclick="assignPoints(1)">فريق أ</button>
-        <button class="modal-btn" style="background:#3498db" onclick="assignPoints(2)">فريق ب</button>
-        <button class="modal-btn" style="background:#e74c3c" onclick="assignPoints(0)">لا أحد</button>
-        <button onclick="closeModal()" style="background:none; border:none; color:#777; cursor:pointer; margin-top:10px;">إلغاء</button>
+    <div class="modal-box">
+        <h2 id="modal-title" style="color:var(--gold)">كشف الجواب</h2>
+        <p id="ans-preview" style="font-size: 24px; margin: 20px 0;"></p>
+        <button class="modal-btn" style="background:#2ecc71" onclick="submitPoint(1)">نقطة لـ <span id="m-t1">أ</span></button>
+        <button class="modal-btn" style="background:#3498db" onclick="submitPoint(2)">نقطة لـ <span id="m-t2">ب</span></button>
+        <button class="modal-btn" style="background:#7f8c8d" onclick="submitPoint(0)">بدون نقاط</button>
+        <button onclick="document.getElementById('modal').style.display='none'" style="background:none; border:none; color:#555; cursor:pointer; margin-top:15px;">إلغاء العملية</button>
     </div>
 </div>
 
 <script>
-    const questions = [
-        { q: "أكثر 10 مسلسلات كرتون شهيرة؟", a: [{t:"توم وجيري",p:1},{t:"سبونج بوب",p:2},{t:"ون بيس",p:3},{t:"ناروتو",p:4},{t:"دراغون بول",p:5},{t:"المحقق كونان",p:6},{t:"سيمبسون",p:7},{t:"بوكيمون",p:8},{t:"بين 10",p:9},{t:"أبطال الديجيتال",p:10}] },
-        { q: "أشهر 10 أندية كرة قدم عالمية؟", a: [{t:"ريال مدريد",p:1},{t:"برشلونة",p:2},{t:"ليفربول",p:3},{t:"مانشستر يونايتد",p:4},{t:"بايرن ميونخ",p:5},{t:"ميلان",p:6},{t:"يوفنتوس",p:7},{t:"باريس سان جيرمان",p:8},{t:"مانشستر سيتي",p:9},{t:"تشيلسي",p:10}] },
-        { q: "أكثر 10 دول سياحية في العالم؟", a: [{t:"فرنسا",p:1},{t:"إسبانيا",p:2},{t:"أمريكا",p:3},{t:"الصين",p:4},{t:"إيطاليا",p:5},{t:"تركيا",p:6},{t:"المكسيك",p:7},{t:"ألمانيا",p:8},{t:"تايلاند",p:9},{t:"بريطانيا",p:10}] }
+    const database = [
+        { q: "أكثر 10 ماركات سيارات مبيعاً في العالم؟", a: [{t:"تويوتا",p:1},{t:"فولكس فاجن",p:2},{t:"فورد",p:3},{t:"هوندا",p:4},{t:"نيسان",p:5},{t:"هيونداي",p:6},{t:"كيا",p:7},{t:"مرسيدس",p:8},{t:"بي إم دبليو",p:9},{t:"تسلا",p:10}] },
+        { q: "أكثر 10 تطبيقات تحميلاً في العالم؟", a: [{t:"تيك توك",p:1},{t:"واتساب",p:2},{t:"فيسبوك",p:3},{t:"إنستغرام",p:4},{t:"يوتيوب",p:5},{t:"تلغرام",p:6},{t:"سناب شات",p:7},{t:"ماسنجر",p:8},{t:"كاب كات",p:9},{t:"ثريدز",p:10}] },
+        { q: "أكثر 10 دول سكاناً في العالم؟", a: [{t:"الهند",p:1},{t:"الصين",p:2},{t:"أمريكا",p:3},{t:"إندونيسيا",p:4},{t:"باكستان",p:5},{t:"نيجيريا",p:6},{t:"البرازيل",p:7},{t:"بنجلاديش",p:8},{t:"روسيا",p:9},{t:"المكسيك",p:10}] },
+        { q: "أكثر 10 أندية كرة قدم فوزاً بدوري أبطال أوروبا؟", a: [{t:"ريال مدريد",p:1},{t:"ميلان",p:2},{t:"ليفربول",p:3},{t:"بايرن ميونخ",p:4},{t:"برشلونة",p:5},{t:"أياكس",p:6},{t:"مانشستر يونايتد",p:7},{t:"إنتر ميلان",p:8},{t:"يوفنتوس",p:9},{t:"بنفيكا",p:10}] },
+        { q: "أكثر 10 فواكه إنتاجاً في العالم؟", a: [{t:"الموز",p:1},{t:"البطيخ",p:2},{t:"التفاح",p:3},{t:"العنب",p:4},{t:"البرتقال",p:5},{t:"المانجو",p:6},{t:"الأناناس",p:7},{t:"الفراولة",p:8},{t:"الليمون",p:9},{t:"الكمثرى",p:10}] },
+        { q: "أكثر 10 لغات تحدثاً في العالم (كـ لغة أم)؟", a: [{t:"الصينية (ماندرين)",p:1},{t:"الإسبانية",p:2},{t:"الإنجليزية",p:3},{t:"الهندية",p:4},{t:"البنغالية",p:5},{t:"البرتغالية",p:6},{t:"الروسية",p:7},{t:"اليابانية",p:8},{t:"البنجابية",p:9},{t:"العربية",p:10}] },
+        { q: "أكبر 10 شركات في العالم من حيث القيمة السوقية؟", a: [{t:"أبل",p:1},{t:"مايكروسوفت",p:2},{t:"إنفيديا",p:3},{t:"أرامكو",p:4},{t:"أمازون",p:5},{t:"ألفابت (جوجل)",p:6},{t:"ميتا",p:7},{t:"بيركشير هاثاواي",p:8},{t:"إيلي ليلي",p:9},{t:"تي إس إم سي",p:10}] },
+        { q: "أكثر 10 دول جذباً للسياح؟", a: [{t:"فرنسا",p:1},{t:"إسبانيا",p:2},{t:"أمريكا",p:3},{t:"تركيا",p:4},{t:"إيطاليا",p:5},{t:"المكسيك",p:6},{t:"بريطانيا",p:7},{t:"ألمانيا",p:8},{t:"اليونان",p:9},{t:"النمسا",p:10}] },
+        { q: "أكثر 10 قنوات يوتيوب اشتراكاً؟", a: [{t:"MrBeast",p:1},{t:"T-Series",p:2},{t:"Cocomelon",p:3},{t:"SET India",p:4},{t:"Kids Diana Show",p:5},{t:"Vlad and Niki",p:6},{t:"PewDiePie",p:7},{t:"Like Nastya",p:8},{t:"Zee Music Company",p:9},{t:"WWE",p:10}] },
+        { q: "أكثر 10 عناصر كيميائية وجوداً في القشرة الأرضية؟", a: [{t:"الأكسجين",p:1},{t:"السيليكون",p:2},{t:"الألومنيوم",p:3},{t:"الحديد",p:4},{t:"الكالسيوم",p:5},{t:"الصوديوم",p:6},{t:"البوتاسيوم",p:7},{t:"المغنيسيوم",p:8},{t:"التيتانيوم",p:9},{t:"الهيدروجين",p:10}] }
     ];
 
-    let currentQ = 0, score1 = 0, score2 = 0, activeIdx = -1;
+    let score1 = 0, score2 = 0, currentQ = 0, activeIdx = -1;
+    let name1 = "فريق أ", name2 = "فريق ب";
 
-    function render() {
-        const q = questions[currentQ];
-        document.getElementById('q-text').innerText = q.q;
-        document.getElementById('q-count').innerText = `سؤال ${currentQ + 1} من ${questions.length}`;
-        const grid = document.getElementById('grid');
-        grid.innerHTML = '';
-        q.a.forEach((ans, i) => {
-            const div = document.createElement('div');
-            div.className = `card ${ans.rev ? 'revealed' : ''}`;
-            div.innerHTML = ans.rev ? `${ans.t} (${ans.p})` : (i + 1);
-            div.onclick = () => openModal(i);
-            grid.appendChild(div);
-        });
-    }
-
-    function openModal(i) {
-        if (questions[currentQ].a[i].rev) return;
-        activeIdx = i;
-        document.getElementById('target-ans').innerText = `الإجابة: ${questions[currentQ].a[i].text || 'إجابة رقم ' + (i+1)}`;
-        document.getElementById('modal').style.display = 'flex';
-    }
-
-    function assignPoints(team) {
-        const p = questions[currentQ].a[activeIdx].p;
-        questions[currentQ].a[activeIdx].rev = true;
-        if(team === 1) score1 += p;
-        if(team === 2) score2 += p;
-        document.getElementById('s1').innerText = score1;
-        document.getElementById('s2').innerText = score2;
-        closeModal();
+    function initGame() {
+        name1 = document.getElementById('t1-input').value || "فريق أ";
+        name2 = document.getElementById('t2-input').value || "فريق ب";
+        document.getElementById('t1-name').innerText = name1;
+        document.getElementById('t2-name').innerText = name2;
+        document.getElementById('m-t1').innerText = name1;
+        document.getElementById('m-t2').innerText = name2;
+        document.getElementById('setup-layer').style.display = 'none';
         render();
     }
 
-    function closeModal() { document.getElementById('modal').style.display = 'none'; }
-    function nextQ() { if(currentQ < questions.length-1) { currentQ++; render(); } }
-    function prevQ() { if(currentQ > 0) { currentQ--; render(); } }
+    function render() {
+        const qData = database[currentQ];
+        document.getElementById('q-text').innerText = qData.q;
+        document.getElementById('q-progress').innerText = `سؤال ${currentQ + 1} من ${database.length}`;
+        const grid = document.getElementById('game-grid');
+        grid.innerHTML = '';
+        qData.a.forEach((ans, i) => {
+            const card = document.createElement('div');
+            card.className = `ans-card ${ans.v ? 'revealed' : ''}`;
+            card.innerHTML = ans.v ? `${ans.t} (${ans.p})` : (i + 1);
+            card.onclick = () => { if(!ans.v) { activeIdx = i; document.getElementById('ans-preview').innerText = `الجواب: ${ans.t}`; document.getElementById('modal').style.display = 'flex'; } };
+            grid.appendChild(card);
+        });
+    }
 
-    render();
+    function submitPoint(team) {
+        const pts = database[currentQ].a[activeIdx].p;
+        database[currentQ].a[activeIdx].v = true;
+        if(team === 1) { score1 += pts; document.getElementById('s1-val').innerText = score1; }
+        if(team === 2) { score2 += pts; document.getElementById('s2-val').innerText = score2; }
+        document.getElementById('modal').style.display = 'none';
+        render();
+    }
+
+    function changeQ(dir) {
+        if(currentQ + dir >= 0 && currentQ + dir < database.length) {
+            currentQ += dir;
+            render();
+        }
+    }
 </script>
 </body>
 </html>
