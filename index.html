@@ -2,67 +2,105 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>The Architect Game Show</title>
+    <title>The Architect - Game Show</title>
     <style>
-        body { background-color: #0a0a0a; color: #00ff00; font-family: 'Arial', sans-serif; text-align: center; }
-        .container { display: flex; justify-content: space-around; margin-top: 20px; }
-        .score-box { border: 3px solid #ff0000; padding: 20px; font-size: 40px; border-radius: 15px; background: #1a0000; }
-        .timer { font-size: 80px; color: #ff0000; margin: 20px; text-shadow: 0 0 15px #ff0000; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
-        .slot { border: 2px solid #00ff00; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 25px; background: #001a00; border-radius: 10px; }
-        .revealed { background: #00ff00; color: #000; font-weight: bold; }
+        :root { --gold: #d4af37; --dark: #0f1016; --panel: #1c1e26; }
+        body { background-color: var(--dark); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; overflow: hidden; }
+        
+        /* توزيع الشاشة */
+        .game-wrapper { display: grid; grid-template-columns: 200px 1fr 200px; height: 100vh; padding: 20px; gap: 20px; }
+        
+        .team-panel { background: var(--panel); border: 2px solid var(--gold); border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .score { font-size: 60px; color: var(--gold); margin: 10px 0; }
+        
+        .main-stage { text-align: center; }
+        .question-box { background: var(--panel); padding: 20px; border-radius: 10px; margin-bottom: 30px; border-bottom: 4px solid var(--gold); }
+        
+        /* شبكة الأجوبة */
+        .answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .answer-card { background: #252833; padding: 15px; border-radius: 8px; position: relative; min-height: 60px; display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; transition: 0.3s; border: 1px solid #3d4255; }
+        
+        /* أزرار التحكم المخفية */
+        .controls { display: none; position: absolute; bottom: -40px; left: 0; width: 100%; background: #000; z-index: 10; gap: 5px; padding: 5px; border-radius: 5px; }
+        .answer-card:hover .controls { display: flex; }
+        
+        .btn { border: none; padding: 5px 10px; cursor: pointer; color: white; border-radius: 4px; font-size: 12px; flex: 1; }
+        .btn-a { background: #2ecc71; }
+        .btn-b { background: #3498db; }
+        .btn-none { background: #e74c3c; }
+        
+        .revealed { background: var(--gold) !important; color: black; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="timer" id="countdown">20</div>
-    <h1 id="question">جاري تحميل السؤال...</h1>
-    
-    <div class="container">
-        <div class="score-box">فريق A: <span id="score1">0</span></div>
-        <div class="score-box">فريق B: <span id="score2">0</span></div>
+
+<div class="game-wrapper">
+    <div class="team-panel">
+        <h2>فريق أ</h2>
+        <div class="score" id="scoreA">0</div>
     </div>
 
-    <div class="grid" id="answers-grid">
+    <div class="main-stage">
+        <div class="question-box">
+            <h1 id="question">أكثر 10 مسلسلات كرتون شهيرة ومحبوبة في العالم؟</h1>
         </div>
 
-    <script>
-        let timeLeft = 20;
-        let timerInterval;
+        <div class="answers-grid" id="grid">
+            </div>
+    </div>
 
-        // دالة لتحديث البيانات من السيرفر كل ثانية
-        async function updateDisplay() {
-            const res = await fetch('/get_data');
-            const data = await res.json();
-            
-            document.getElementById('question').innerText = data.question;
-            document.getElementById('score1').innerText = data.scores.team1;
-            document.getElementById('score2').innerText = data.scores.team2;
-            
-            let gridHtml = '';
-            data.answers.forEach((ans, i) => {
-                gridHtml += `<div class="slot ${ans.revealed ? 'revealed' : ''}">
-                    ${ans.revealed ? ans.text + " (" + ans.points + ")" : (i + 1)}
-                </div>`;
-            });
-            document.getElementById('answers-grid').innerHTML = gridHtml;
+    <div class="team-panel">
+        <h2>فريق ب</h2>
+        <div class="score" id="scoreB">0</div>
+    </div>
+</div>
+
+<script>
+    const answersData = [
+        { text: "توم وجيري", pts: 10 }, { text: "سبونج بوب", pts: 9 },
+        { text: "ون بيس", pts: 8 }, { text: "ناروتو", pts: 7 },
+        { text: "دراغون بول", pts: 6 }, { text: "المحقق كونان", pts: 5 },
+        { text: "سيمبسون", pts: 4 }, { text: "بوكيمون", pts: 3 },
+        { text: "بين 10", pts: 2 }, { text: "أبطال الديجيتال", pts: 1 }
+    ];
+
+    let scoreA = 0;
+    let scoreB = 0;
+
+    const grid = document.getElementById('grid');
+
+    answersData.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'answer-card';
+        card.id = `ans-${index}`;
+        card.innerHTML = `
+            <span class="text">${index + 1} - اضغط للكشف</span>
+            <div class="controls">
+                <button class="btn btn-a" onclick="reveal(${index}, 'A')">لفريق أ</button>
+                <button class="btn btn-b" onclick="reveal(${index}, 'B')">لفريق ب</button>
+                <button class="btn btn-none" onclick="reveal(${index}, 'none')">لا أحد</button>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+
+    function reveal(index, team) {
+        const card = document.getElementById(`ans-${index}`);
+        if (card.classList.contains('revealed')) return;
+
+        card.classList.add('revealed');
+        card.querySelector('.text').innerText = `${answersData[index].text} (${answersData[index].pts})`;
+        
+        if (team === 'A') {
+            scoreA += answersData[index].pts;
+            document.getElementById('scoreA').innerText = scoreA;
+        } else if (team === 'B') {
+            scoreB += answersData[index].pts;
+            document.getElementById('scoreB').innerText = scoreB;
         }
+        // خيار 'none' لا يضيف نقاطاً لأحد
+    }
+</script>
 
-        // دالة العداد
-        function startTimer() {
-            clearInterval(timerInterval);
-            timeLeft = 20;
-            timerInterval = setInterval(() => {
-                if(timeLeft <= 0) {
-                    document.getElementById('countdown').innerText = "انتهى الوقت!";
-                    clearInterval(timerInterval);
-                } else {
-                    document.getElementById('countdown').innerText = timeLeft;
-                    timeLeft--;
-                }
-            }, 1000);
-        }
-
-        setInterval(updateDisplay, 1000); // تحديث الشاشة تلقائياً كل ثانية
-    </script>
 </body>
 </html>
