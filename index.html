@@ -2,103 +2,124 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>The Architect - Game Show</title>
+    <title>The Architect - Game Master</title>
     <style>
-        :root { --gold: #d4af37; --dark: #0f1016; --panel: #1c1e26; }
-        body { background-color: var(--dark); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; overflow: hidden; }
+        :root { --gold: #d4af37; --dark: #0a0b10; --card: #161b22; --btn-hover: #1f242d; }
+        body { background-color: var(--dark); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* توزيع الشاشة */
-        .game-wrapper { display: grid; grid-template-columns: 200px 1fr 200px; height: 100vh; padding: 20px; gap: 20px; }
+        /* شاشة إدخال الأسماء */
+        #setup-screen { position: fixed; inset: 0; background: var(--dark); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+        .input-group { display: flex; flex-direction: column; gap: 10px; }
+        input { padding: 15px; font-size: 20px; border-radius: 8px; border: 2px solid var(--gold); background: #000; color: white; text-align: center; }
+        .start-btn { padding: 15px 40px; font-size: 24px; background: var(--gold); color: black; border: none; cursor: pointer; font-weight: bold; border-radius: 10px; }
+
+        /* الشاشة الرئيسية */
+        .game-layout { display: grid; grid-template-columns: 250px 1fr 250px; flex: 1; padding: 30px; gap: 40px; }
         
-        .team-panel { background: var(--panel); border: 2px solid var(--gold); border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .score { font-size: 60px; color: var(--gold); margin: 10px 0; }
-        
-        .main-stage { text-align: center; }
-        .question-box { background: var(--panel); padding: 20px; border-radius: 10px; margin-bottom: 30px; border-bottom: 4px solid var(--gold); }
-        
+        .side-panel { background: var(--card); border: 2px solid var(--gold); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(212, 175, 55, 0.1); }
+        .team-name { font-size: 28px; color: var(--gold); margin-bottom: 10px; text-transform: uppercase; }
+        .score-value { font-size: 80px; font-weight: 900; color: #fff; text-shadow: 0 0 15px var(--gold); }
+
+        .center-stage { display: flex; flex-direction: column; gap: 30px; }
+        .q-header { background: var(--card); padding: 30px; border-radius: 15px; border-bottom: 5px solid var(--gold); text-align: center; font-size: 32px; }
+
         /* شبكة الأجوبة */
-        .answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .answer-card { background: #252833; padding: 15px; border-radius: 8px; position: relative; min-height: 60px; display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; transition: 0.3s; border: 1px solid #3d4255; }
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .ans-card { background: var(--card); height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 24px; position: relative; border: 1px solid #30363d; cursor: pointer; overflow: visible; }
         
-        /* أزرار التحكم المخفية */
-        .controls { display: none; position: absolute; bottom: -40px; left: 0; width: 100%; background: #000; z-index: 10; gap: 5px; padding: 5px; border-radius: 5px; }
-        .answer-card:hover .controls { display: flex; }
+        /* أزرار التحكم - تظهر عند الحوسبة */
+        .controls { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); border-radius: 12px; z-index: 5; align-items: center; justify-content: space-around; padding: 0 10px; box-sizing: border-box; }
+        .ans-card:hover .controls { display: flex; }
         
-        .btn { border: none; padding: 5px 10px; cursor: pointer; color: white; border-radius: 4px; font-size: 12px; flex: 1; }
-        .btn-a { background: #2ecc71; }
-        .btn-b { background: #3498db; }
-        .btn-none { background: #e74c3c; }
-        
-        .revealed { background: var(--gold) !important; color: black; font-weight: bold; }
+        .ctrl-btn { border: none; padding: 10px; color: white; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 14px; flex: 1; margin: 0 3px; }
+        .btn-t1 { background: #2ecc71; }
+        .btn-t2 { background: #3498db; }
+        .btn-no { background: #7f8c8d; }
+
+        .revealed { background: var(--gold) !important; color: #000 !important; font-weight: bold; border-color: #fff; }
     </style>
 </head>
 <body>
 
-<div class="game-wrapper">
-    <div class="team-panel">
-        <h2>فريق أ</h2>
-        <div class="score" id="scoreA">0</div>
+<div id="setup-screen">
+    <h1 style="color:var(--gold)">إعداد المعركة</h1>
+    <div class="input-group">
+        <input type="text" id="name1" placeholder="اسم الفريق الأول">
+        <input type="text" id="name2" placeholder="اسم الفريق الثاني">
+    </div>
+    <button class="start-btn" onclick="startGame()">ابدأ الهجوم 🔥</button>
+</div>
+
+<div class="game-layout">
+    <div class="side-panel">
+        <div class="team-name" id="display-name1">فريق 1</div>
+        <div class="score-value" id="score1">0</div>
     </div>
 
-    <div class="main-stage">
-        <div class="question-box">
-            <h1 id="question">أكثر 10 مسلسلات كرتون شهيرة ومحبوبة في العالم؟</h1>
-        </div>
-
-        <div class="answers-grid" id="grid">
-            </div>
+    <div class="center-stage">
+        <div class="q-header">أكثر 10 مسلسلات كرتون شهيرة ومحبوبة في العالم؟</div>
+        <div class="grid-container" id="game-grid"></div>
     </div>
 
-    <div class="team-panel">
-        <h2>فريق ب</h2>
-        <div class="score" id="scoreB">0</div>
+    <div class="side-panel">
+        <div class="team-name" id="display-name2">فريق 2</div>
+        <div class="score-value" id="score2">0</div>
     </div>
 </div>
 
 <script>
-    const answersData = [
-        { text: "توم وجيري", pts: 10 }, { text: "سبونج بوب", pts: 9 },
-        { text: "ون بيس", pts: 8 }, { text: "ناروتو", pts: 7 },
-        { text: "دراغون بول", pts: 6 }, { text: "المحقق كونان", pts: 5 },
-        { text: "سيمبسون", pts: 4 }, { text: "بوكيمون", pts: 3 },
-        { text: "بين 10", pts: 2 }, { text: "أبطال الديجيتال", pts: 1 }
+    const data = [
+        { text: "توم وجيري", p: 1 }, { text: "سبونج بوب", p: 2 },
+        { text: "ون بيس", p: 3 }, { text: "ناروتو", p: 4 },
+        { text: "دراغون بول", p: 5 }, { text: "المحقق كونان", p: 6 },
+        { text: "سيمبسون", p: 7 }, { text: "بوكيمون", p: 8 },
+        { text: "بين 10", p: 9 }, { text: "أبطال الديجيتال", p: 10 }
     ];
 
-    let scoreA = 0;
-    let scoreB = 0;
+    let s1 = 0, s2 = 0;
 
-    const grid = document.getElementById('grid');
+    function startGame() {
+        const n1 = document.getElementById('name1').value || "فريق أ";
+        const n2 = document.getElementById('name2').value || "فريق ب";
+        document.getElementById('display-name1').innerText = n1;
+        document.getElementById('display-name2').innerText = n2;
+        document.getElementById('setup-screen').style.display = 'none';
+        initGrid();
+    }
 
-    answersData.forEach((item, index) => {
-        const card = document.createElement('div');
-        card.className = 'answer-card';
-        card.id = `ans-${index}`;
-        card.innerHTML = `
-            <span class="text">${index + 1} - اضغط للكشف</span>
-            <div class="controls">
-                <button class="btn btn-a" onclick="reveal(${index}, 'A')">لفريق أ</button>
-                <button class="btn btn-b" onclick="reveal(${index}, 'B')">لفريق ب</button>
-                <button class="btn btn-none" onclick="reveal(${index}, 'none')">لا أحد</button>
-            </div>
-        `;
-        grid.appendChild(card);
-    });
+    function initGrid() {
+        const grid = document.getElementById('game-grid');
+        data.forEach((item, i) => {
+            const card = document.createElement('div');
+            card.className = 'ans-card';
+            card.id = `card-${i}`;
+            card.innerHTML = `
+                <span id="text-${i}">${i + 1}</span>
+                <div class="controls">
+                    <button class="ctrl-btn btn-t1" onclick="handle(${i}, 1)">لفريق أ</button>
+                    <button class="ctrl-btn btn-t2" onclick="handle(${i}, 2)">لفريق ب</button>
+                    <button class="ctrl-btn btn-no" onclick="handle(${i}, 0)">لا أحد</button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
 
-    function reveal(index, team) {
-        const card = document.getElementById(`ans-${index}`);
-        if (card.classList.contains('revealed')) return;
+    function handle(idx, team) {
+        const card = document.getElementById(`card-${idx}`);
+        if(card.classList.contains('revealed')) return;
 
         card.classList.add('revealed');
-        card.querySelector('.text').innerText = `${answersData[index].text} (${answersData[index].pts})`;
-        
-        if (team === 'A') {
-            scoreA += answersData[index].pts;
-            document.getElementById('scoreA').innerText = scoreA;
-        } else if (team === 'B') {
-            scoreB += answersData[index].pts;
-            document.getElementById('scoreB').innerText = scoreB;
+        document.getElementById(`text-${idx}`).innerText = `${data[idx].text} (${data[idx].p})`;
+
+        if(team === 1) {
+            s1 += data[idx].p;
+            document.getElementById('score1').innerText = s1;
+        } else if(team === 2) {
+            s2 += data[idx].p;
+            document.getElementById('score2').innerText = s2;
         }
-        // خيار 'none' لا يضيف نقاطاً لأحد
+        // في حالة 0 (لا أحد) لا تضاف نقاط
     }
 </script>
 
